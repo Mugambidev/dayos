@@ -1,12 +1,13 @@
-// LOCAL DEV schema — uses SQLite (no setup needed)
-// For production/Vercel, see prisma/schema.postgresql.prisma
+// PRODUCTION schema — uses PostgreSQL (Neon free tier)
+// This file is used by Vercel via the custom build command:
+//   prisma generate --schema=prisma/schema.postgresql.prisma && next build
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

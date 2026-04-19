@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate --schema=prisma/schema.postgresql.prisma && next build",
+    "db:push:prod": "prisma db push --schema=prisma/schema.postgresql.prisma"
   },
   "dependencies": {
     "@google/generative-ai": "^0.11.0",
