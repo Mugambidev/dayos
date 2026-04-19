@@ -1,0 +1,37 @@
+{
+  "name": "DayOS — Personal Daily OS",
+  "short_name": "DayOS",
+  "description": "Your AI-powered personal productivity dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#08090e",
+  "theme_color": "#08090e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Daily Brief",
+      "url": "/?tab=brief",
+      "description": "View your AI morning summary"
+    },
+    {
+      "name": "Focus Timer",
+      "url": "/?tab=focus",
+      "description": "Start a focus session"
+    }
+  ]
+}

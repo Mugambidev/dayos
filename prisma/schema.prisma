@@ -1,0 +1,46 @@
+// DayOS Database Schema
+// Local dev: SQLite  →  DATABASE_URL="file:./dev.db"
+// Production: PostgreSQL (Neon) → DATABASE_URL="postgresql://..."
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = env("DB_PROVIDER") // set to "sqlite" or "postgresql" in .env
+  url      = env("DATABASE_URL")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  content   String
+  tags      String   @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Habit {
+  id        String     @id @default(cuid())
+  name      String
+  emoji     String     @default("✅")
+  streak    Int        @default(0)
+  createdAt DateTime   @default(now())
+  logs      HabitLog[]
+}
+
+model HabitLog {
+  id      String @id @default(cuid())
+  habitId String
+  date    String // YYYY-MM-DD
+  habit   Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  completed   Boolean  @default(false)
+  sessionDone Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
