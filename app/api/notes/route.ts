@@ -23,8 +23,8 @@ export async function POST(request: Request) {
 
     let tags: string[] = []
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
-      const result = await model.generateContent(
+       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' })
+       const result = await model.generateContent(
         `Generate 2-4 concise tags for this note. Return ONLY a JSON array of lowercase strings, no markdown, no code fences, no explanation.
 Note: "${content}"
 Example: ["idea","product","ux"]`
