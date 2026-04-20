@@ -12,7 +12,7 @@ export async function GET() {
     const dateFull = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     const userName = process.env.USER_NAME || 'there'
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-preview-05-20' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     const prompt = `You are the AI core of DayOS, a personal productivity OS. Generate a daily brief for ${greeting.toLowerCase()} on ${dayName}, ${dateFull}. The user's name is "${userName}".
 
