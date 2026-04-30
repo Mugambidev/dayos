@@ -3,14 +3,17 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    // Name from query param (set by user in Settings) takes priority over env var
+    const userName = searchParams.get('name') || process.env.USER_NAME || 'there'
+
     const now = new Date()
     const hour = now.getHours()
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
     const dayName = now.toLocaleDateString('en-US', { weekday: 'long' })
     const dateFull = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-    const userName = process.env.USER_NAME || 'there'
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 

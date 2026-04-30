@@ -19,6 +19,42 @@ const TABS: { id: Tab; label: string; icon: string; desc: string }[] = [
   { id: 'settings', label: 'Settings',      icon: '⚙️', desc: 'Customize DayOS'   },
 ]
 
+// Injects a <style> tag that overrides ALL amber Tailwind classes with the chosen color
+export function applyAccentColor(hex: string) {
+  document.getElementById('dayos-accent-style')?.remove()
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  const style = document.createElement('style')
+  style.id = 'dayos-accent-style'
+  style.textContent = `
+    :root { --accent: ${hex}; }
+    .text-amber-glow { color: ${hex} !important; }
+    .text-amber-glow\\/70 { color: rgb(${r} ${g} ${b} / 0.7) !important; }
+    .text-amber-glow\\/60 { color: rgb(${r} ${g} ${b} / 0.6) !important; }
+    .text-amber-glow\\/50 { color: rgb(${r} ${g} ${b} / 0.5) !important; }
+    .bg-amber-glow { background-color: ${hex} !important; }
+    .bg-amber-glow\\/5  { background-color: rgb(${r} ${g} ${b} / 0.05) !important; }
+    .bg-amber-glow\\/10 { background-color: rgb(${r} ${g} ${b} / 0.10) !important; }
+    .bg-amber-glow\\/15 { background-color: rgb(${r} ${g} ${b} / 0.15) !important; }
+    .bg-amber-glow\\/20 { background-color: rgb(${r} ${g} ${b} / 0.20) !important; }
+    .bg-amber-glow\\/30 { background-color: rgb(${r} ${g} ${b} / 0.30) !important; }
+    .border-amber-glow  { border-color: ${hex} !important; }
+    .border-amber-glow\\/20 { border-color: rgb(${r} ${g} ${b} / 0.2) !important; }
+    .border-amber-glow\\/25 { border-color: rgb(${r} ${g} ${b} / 0.25) !important; }
+    .border-amber-glow\\/30 { border-color: rgb(${r} ${g} ${b} / 0.30) !important; }
+    .border-amber-glow\\/50 { border-color: rgb(${r} ${g} ${b} / 0.50) !important; }
+    .glow-amber { box-shadow: 0 0 20px rgb(${r} ${g} ${b} / 0.15), 0 0 40px rgb(${r} ${g} ${b} / 0.08) !important; }
+    .text-glow-amber { text-shadow: 0 0 20px rgb(${r} ${g} ${b} / 0.5) !important; }
+    .btn-primary { background: ${hex} !important; }
+    .btn-primary:hover { background: ${hex}dd !important; box-shadow: 0 0 16px rgb(${r} ${g} ${b} / 0.4) !important; }
+    .input-base:focus { border-color: rgb(${r} ${g} ${b} / 0.5) !important; box-shadow: 0 0 0 3px rgb(${r} ${g} ${b} / 0.08) !important; }
+    .habit-check.checked { background: rgb(${r} ${g} ${b} / 0.2) !important; border-color: ${hex} !important; }
+    .habit-check.checked span { color: ${hex} !important; }
+  `
+  document.head.appendChild(style)
+}
+
 function Clock() {
   const [time, setTime] = useState('')
   const [date, setDate] = useState('')
@@ -50,6 +86,19 @@ function DashboardInner() {
   const tabParam = (searchParams.get('tab') as Tab) || 'brief'
   const [activeTab, setActiveTab] = useState<Tab>(tabParam)
 
+  // Apply saved accent color on load
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('dayos-settings')
+      if (saved) {
+        const s = JSON.parse(saved)
+        if (s.accentColor && s.accentColor !== '#f59e0b') {
+          applyAccentColor(s.accentColor)
+        }
+      }
+    } catch {}
+  }, [])
+
   const switchTab = (tab: Tab) => {
     setActiveTab(tab)
     router.replace(`/?tab=${tab}`, { scroll: false })
@@ -57,7 +106,6 @@ function DashboardInner() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-bg-border bg-bg-base/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -75,8 +123,7 @@ function DashboardInner() {
           <Clock />
         </div>
 
-        {/* Tab Bar — scrollable on mobile */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-0.5 overflow-x-auto scrollbar-none">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex gap-0.5 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -98,7 +145,6 @@ function DashboardInner() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6">
         <div className="mb-5">
           <div className="flex items-center gap-2 text-slate-600 font-mono text-xs">

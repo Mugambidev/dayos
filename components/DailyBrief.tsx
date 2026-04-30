@@ -20,7 +20,15 @@ export default function DailyBrief() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('/api/brief')
+      // Read name from localStorage so it updates without redeploying
+      let name = ''
+      try {
+        const saved = localStorage.getItem('dayos-settings')
+        if (saved) name = JSON.parse(saved).name || ''
+      } catch {}
+
+      const url = name ? `/api/brief?name=${encodeURIComponent(name)}` : '/api/brief'
+      const res = await fetch(url)
       const json = await res.json()
       if (json.success) setData(json.data)
       else throw new Error(json.error)
@@ -66,9 +74,7 @@ export default function DailyBrief() {
     <div className="space-y-4">
       {/* Greeting + Focus Word */}
       <div className="panel p-6 sm:p-8 relative overflow-hidden animate-fade-in-up">
-        {/* Background decoration */}
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-amber-glow/3 blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-
         <div className="relative">
           <div className="font-mono text-xs text-slate-600 mb-2 flex items-center gap-2">
             <span className="text-amber-glow">◆</span> SYSTEM.GREETING
@@ -76,8 +82,6 @@ export default function DailyBrief() {
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 leading-snug">
             {data.greeting}
           </h1>
-
-          {/* Focus word */}
           <div className="inline-flex items-center gap-3 bg-amber-glow/5 border border-amber-glow/20 rounded-xl px-5 py-3">
             <span className="font-mono text-xs text-slate-500">TODAY&apos;S WORD</span>
             <span className="font-mono text-2xl font-bold text-amber-glow text-glow-amber tracking-widest">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { applyAccentColor } from '@/app/page'
 
 const THEMES = [
   { id: 'amber',   label: 'Amber',   color: '#f59e0b' },
@@ -25,7 +26,6 @@ export interface Settings {
   customShort: number
   customLong: number
   soundEnabled: boolean
-  briefTime: string
 }
 
 const DEFAULTS: Settings = {
@@ -36,20 +36,14 @@ const DEFAULTS: Settings = {
   customShort: 5,
   customLong: 15,
   soundEnabled: true,
-  briefTime: 'morning',
 }
 
-export function useSettings(): Settings {
-  const [settings, setSettings] = useState<Settings>(DEFAULTS)
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('dayos-settings')
-      if (saved) setSettings({ ...DEFAULTS, ...JSON.parse(saved) })
-    } catch {}
-  }, [])
-
-  return settings
+export function loadSettings(): Settings {
+  try {
+    const saved = localStorage.getItem('dayos-settings')
+    if (saved) return { ...DEFAULTS, ...JSON.parse(saved) }
+  } catch {}
+  return DEFAULTS
 }
 
 export default function SettingsPanel() {
@@ -57,21 +51,20 @@ export default function SettingsPanel() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    try {
-      const s = localStorage.getItem('dayos-settings')
-      if (s) setSettings({ ...DEFAULTS, ...JSON.parse(s) })
-    } catch {}
+    setSettings(loadSettings())
   }, [])
 
   const update = (patch: Partial<Settings>) => {
-    setSettings((prev) => ({ ...prev, ...patch }))
+    const next = { ...settings, ...patch }
+    setSettings(next)
     setSaved(false)
+    // Live preview accent color as user picks
+    if (patch.accentColor) applyAccentColor(patch.accentColor)
   }
 
   const save = () => {
     localStorage.setItem('dayos-settings', JSON.stringify(settings))
-    // Apply accent color CSS variable
-    document.documentElement.style.setProperty('--amber', settings.accentColor)
+    applyAccentColor(settings.accentColor)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -79,7 +72,7 @@ export default function SettingsPanel() {
   const reset = () => {
     setSettings(DEFAULTS)
     localStorage.removeItem('dayos-settings')
-    document.documentElement.style.removeProperty('--amber')
+    document.getElementById('dayos-accent-style')?.remove()
   }
 
   const selectedPreset = FOCUS_PRESETS.find((p) => p.label === settings.focusPreset) || FOCUS_PRESETS[0]
@@ -91,20 +84,18 @@ export default function SettingsPanel() {
         <div className="font-mono text-xs text-slate-600 mb-4 flex items-center gap-2">
           <span className="text-amber-glow">◆</span> PROFILE
         </div>
-        <div className="space-y-4">
-          <div>
-            <label className="font-mono text-xs text-slate-500 block mb-2">YOUR NAME</label>
-            <input
-              type="text"
-              value={settings.name}
-              onChange={(e) => update({ name: e.target.value })}
-              placeholder="How should DayOS greet you?"
-              className="input-base w-full px-4 py-3 text-sm"
-            />
-            <p className="font-mono text-xs text-slate-600 mt-1.5">
-              Used in your AI Daily Brief greeting
-            </p>
-          </div>
+        <div>
+          <label className="font-mono text-xs text-slate-500 block mb-2">YOUR NAME</label>
+          <input
+            type="text"
+            value={settings.name}
+            onChange={(e) => update({ name: e.target.value })}
+            placeholder="How should DayOS greet you?"
+            className="input-base w-full px-4 py-3 text-sm"
+          />
+          <p className="font-mono text-xs text-slate-600 mt-1.5">
+            Used in your AI Daily Brief greeting — save and refresh the Brief tab
+          </p>
         </div>
       </div>
 
@@ -112,8 +103,9 @@ export default function SettingsPanel() {
       <div className="panel p-6 animate-fade-in-up delay-100">
         <div className="font-mono text-xs text-slate-600 mb-4 flex items-center gap-2">
           <span className="text-amber-glow">◆</span> ACCENT COLOR
+          <span className="ml-auto font-mono text-xs text-slate-700">live preview ↓</span>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 mb-4">
           {THEMES.map((theme) => (
             <button
               key={theme.id}
@@ -121,27 +113,29 @@ export default function SettingsPanel() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all"
               style={{
                 borderColor: settings.accentColor === theme.color ? theme.color : '#1e2030',
-                background: settings.accentColor === theme.color ? `${theme.color}15` : 'transparent',
+                background: settings.accentColor === theme.color ? `${theme.color}20` : 'transparent',
               }}
             >
-              <div className="w-4 h-4 rounded-full" style={{ background: theme.color }} />
-              <span className="font-mono text-xs" style={{ color: settings.accentColor === theme.color ? theme.color : '#64748b' }}>
+              <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: theme.color }} />
+              <span className="font-mono text-xs" style={{
+                color: settings.accentColor === theme.color ? theme.color : '#64748b'
+              }}>
                 {theme.label}
               </span>
             </button>
           ))}
         </div>
-        <div className="mt-4 flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <label className="font-mono text-xs text-slate-500">CUSTOM HEX</label>
-          <div className="flex items-center gap-2">
-            <input
-              type="color"
-              value={settings.accentColor}
-              onChange={(e) => update({ accentColor: e.target.value })}
-              className="w-9 h-9 rounded-lg cursor-pointer bg-transparent border border-bg-border"
-            />
-            <span className="font-mono text-xs text-slate-500">{settings.accentColor}</span>
-          </div>
+          <input
+            type="color"
+            value={settings.accentColor}
+            onChange={(e) => update({ accentColor: e.target.value })}
+            className="w-9 h-9 rounded-lg cursor-pointer bg-transparent border border-bg-border"
+          />
+          <span className="font-mono text-xs" style={{ color: settings.accentColor }}>
+            {settings.accentColor}
+          </span>
         </div>
       </div>
 
@@ -161,7 +155,9 @@ export default function SettingsPanel() {
                   : 'border-bg-border hover:border-slate-600'
               }`}
             >
-              <div className={`font-mono text-sm font-bold ${settings.focusPreset === preset.label ? 'text-amber-glow' : 'text-slate-400'}`}>
+              <div className={`font-mono text-sm font-bold ${
+                settings.focusPreset === preset.label ? 'text-amber-glow' : 'text-slate-400'
+              }`}>
                 {preset.label}
               </div>
               {preset.label !== 'Custom' && (
@@ -174,9 +170,9 @@ export default function SettingsPanel() {
         {settings.focusPreset === 'Custom' ? (
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'WORK (min)', key: 'customWork' as const, value: settings.customWork },
+              { label: 'WORK (min)',  key: 'customWork'  as const, value: settings.customWork  },
               { label: 'SHORT (min)', key: 'customShort' as const, value: settings.customShort },
-              { label: 'LONG (min)', key: 'customLong' as const, value: settings.customLong },
+              { label: 'LONG (min)',  key: 'customLong'  as const, value: settings.customLong  },
             ].map(({ label, key, value }) => (
               <div key={key}>
                 <label className="font-mono text-xs text-slate-500 block mb-1.5">{label}</label>
@@ -194,9 +190,9 @@ export default function SettingsPanel() {
         ) : (
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'WORK', val: selectedPreset.work },
+              { label: 'WORK',        val: selectedPreset.work  },
               { label: 'SHORT BREAK', val: selectedPreset.short },
-              { label: 'LONG BREAK', val: selectedPreset.long },
+              { label: 'LONG BREAK',  val: selectedPreset.long  },
             ].map(({ label, val }) => (
               <div key={label} className="bg-bg-elevated rounded-xl p-3 text-center">
                 <div className="font-mono text-xs text-slate-600 mb-1">{label}</div>
@@ -212,26 +208,25 @@ export default function SettingsPanel() {
         <div className="font-mono text-xs text-slate-600 mb-4 flex items-center gap-2">
           <span className="text-emerald-400">◆</span> PREFERENCES
         </div>
-        <div className="space-y-4">
-          {/* Sound toggle */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-slate-300 font-medium">Timer Sound</p>
-              <p className="font-mono text-xs text-slate-600 mt-0.5">Beep when a session ends</p>
-            </div>
-            <button
-              onClick={() => update({ soundEnabled: !settings.soundEnabled })}
-              className={`w-12 h-6 rounded-full transition-all relative ${
-                settings.soundEnabled ? 'bg-amber-glow/30' : 'bg-bg-elevated'
-              } border ${settings.soundEnabled ? 'border-amber-glow/50' : 'border-bg-border'}`}
-            >
-              <div
-                className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${
-                  settings.soundEnabled ? 'left-6 bg-amber-glow' : 'left-0.5 bg-slate-600'
-                }`}
-              />
-            </button>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-300 font-medium">Timer Sound</p>
+            <p className="font-mono text-xs text-slate-600 mt-0.5">Beep when a session ends</p>
           </div>
+          <button
+            onClick={() => update({ soundEnabled: !settings.soundEnabled })}
+            className={`w-12 h-6 rounded-full transition-all relative border ${
+              settings.soundEnabled ? 'border-amber-glow/50' : 'border-bg-border'
+            }`}
+            style={{ background: settings.soundEnabled ? `${settings.accentColor}30` : undefined }}
+          >
+            <div
+              className={`absolute top-0.5 w-5 h-5 rounded-full transition-all ${
+                settings.soundEnabled ? 'left-6' : 'left-0.5 bg-slate-600'
+              }`}
+              style={settings.soundEnabled ? { background: settings.accentColor } : {}}
+            />
+          </button>
         </div>
       </div>
 
@@ -248,10 +243,10 @@ export default function SettingsPanel() {
         </button>
       </div>
 
-      {/* Info box */}
       <div className="border border-bg-border rounded-xl p-4 bg-bg-elevated/50">
         <p className="font-mono text-xs text-slate-600 leading-relaxed">
-          Settings are saved locally in your browser. Your data (notes, habits, tasks) is stored in the database configured via <span className="text-amber-glow">DATABASE_URL</span>.
+          Settings are saved in your browser. Color changes are <span className="text-amber-glow">live</span> — no save needed to preview.
+          Name changes apply on your next Daily Brief load after saving.
         </p>
       </div>
     </div>
